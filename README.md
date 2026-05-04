@@ -2,21 +2,43 @@
 
 AI Quota Optimizer là một utility nhỏ cho macOS để tự động "đốt" session quota sớm vào khoảng 05:30 sáng, nhờ đó cửa sổ 5 giờ đầu tiên kết thúc trước giờ làm việc chính.
 
-## Quick Start
+## Cài đặt nhanh
+
+Clone repo:
 
 ```bash
 git clone https://github.com/lukatizzz/ai-quota-optimizer
 cd ai-quota-optimizer
+```
+
+Cài LaunchAgent:
+
+```bash
 ./setup.sh install
-./setup.sh run-now
-./setup.sh status
-./setup.sh logs
 ```
 
 Nếu muốn máy tự wake khỏi sleep lúc 05:25 sáng các ngày làm việc:
 
 ```bash
 sudo ./setup.sh setup-wake
+```
+
+Kiểm tra trạng thái:
+
+```bash
+./setup.sh status
+```
+
+Chạy thử ngay lập tức:
+
+```bash
+./setup.sh run-now
+```
+
+Xem log gần nhất:
+
+```bash
+./setup.sh logs
 ```
 
 Mục tiêu là tận dụng quota theo cách này:
