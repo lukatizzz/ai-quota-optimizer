@@ -1,143 +1,143 @@
 # AI Quota Optimizer
 
-AI Quota Optimizer là một utility nhỏ cho macOS để tự động "đốt" session quota sớm vào khoảng 05:30 sáng, nhờ đó cửa sổ 5 giờ đầu tiên kết thúc trước giờ làm việc chính.
+AI Quota Optimizer is a small macOS utility that automatically triggers an AI session early at 05:30, so the first 5-hour window ends before your main working hours begin.
 
-## Cài đặt nhanh
+## Installation
 
-Clone repo:
+Clone the repo:
 
 ```bash
 git clone https://github.com/lukatizzz/ai-quota-optimizer
 cd ai-quota-optimizer
 ```
 
-Cài LaunchAgent:
+Install the LaunchAgent:
 
 ```bash
 ./setup.sh install
 ```
 
-Nếu muốn máy tự wake khỏi sleep lúc 05:25 sáng các ngày làm việc:
+To wake the machine from sleep at 05:25 on weekdays:
 
 ```bash
 sudo ./setup.sh setup-wake
 ```
 
-Kiểm tra trạng thái:
+Check status:
 
 ```bash
 ./setup.sh status
 ```
 
-Chạy thử ngay lập tức:
+Run immediately:
 
 ```bash
 ./setup.sh run-now
 ```
 
-Xem log gần nhất:
+View recent logs:
 
 ```bash
 ./setup.sh logs
 ```
 
-Mục tiêu là tận dụng quota theo cách này:
+The goal is to make use of quota windows like this:
 
-- Session 1: 05:30 -> 10:30
-- Session 2: 10:30 -> 15:30
-- Session 3: 15:30 -> 20:30
+- Session 1: 05:30 → 10:30
+- Session 2: 10:30 → 15:30
+- Session 3: 15:30 → 20:30
 
-Với lịch làm việc phổ biến 08:00-18:00 và nghỉ trưa 11:50-12:50, cách này giúp phủ tốt hơn giờ làm việc so với việc chỉ bắt đầu session đầu tiên khi vào công ty.
+With a typical 08:00–18:00 work schedule, this gives better coverage of working hours compared to starting the first session only when you arrive at the office.
 
-## Cách hoạt động
+## How it works
 
-Project gồm 2 phần chính:
+The project has two main parts:
 
-- `launchd` LaunchAgent chạy script vào 05:30 từ thứ Hai đến thứ Sáu.
-- `pmset repeat wake` có thể được bật thêm để máy tự wake khỏi sleep vào 05:25.
+- A `launchd` LaunchAgent that runs the trigger script at 05:30, Monday through Friday.
+- An optional `pmset repeat wake` schedule to wake the machine from sleep at 05:25.
 
-Script trigger sẽ thử gửi một prompt rất ngắn tới các công cụ khả dụng như:
+The trigger script sends a short prompt to whichever tools are available:
 
 - Claude Code CLI (`claude`)
 - Codex CLI (`codex`)
-- OpenAI API nếu có `OPENAI_API_KEY`
-- Anthropic API nếu có `ANTHROPIC_API_KEY`
+- OpenAI API if `OPENAI_API_KEY` is set
+- Anthropic API if `ANTHROPIC_API_KEY` is set
 
-Hiện tại script đã tự bổ sung các thư mục binary user-level phổ biến như `$HOME/.local/bin` và `$HOME/bin`, nên các bản cài Claude CLI kiểu user-local vẫn được nhận diện khi chạy qua `launchd`.
+The script automatically prepends common user-level binary directories such as `$HOME/.local/bin` and `$HOME/bin` to `PATH`, so user-local Claude CLI installations are found when running under `launchd`.
 
-## Yêu cầu
+## Requirements
 
 - macOS
-- Có sẵn ít nhất một AI tool hoặc API key mà bạn muốn trigger
-- Nếu muốn máy tự wake khỏi sleep: cần quyền `sudo`
+- At least one AI tool or API key you want to trigger
+- `sudo` access if you want the machine to wake from sleep automatically
 
-Ví dụ môi trường đã được kiểm chứng:
+Verified environment:
 
-- Claude Code CLI tại `$HOME/.local/bin/claude`
-- Codex CLI với chế độ non-interactive qua `codex exec`
+- Claude Code CLI at `$HOME/.local/bin/claude`
+- Codex CLI in non-interactive mode via `codex exec`
 
-## Gỡ cài đặt
+## Uninstall
 
-Gỡ LaunchAgent:
+Remove the LaunchAgent:
 
 ```bash
 ./setup.sh uninstall
 ```
 
-Nếu trước đó đã bật wake schedule:
+If you previously enabled the wake schedule:
 
 ```bash
 sudo ./setup.sh remove-wake
 ```
 
-## Cấu trúc project
+## Project structure
 
-- `trigger-ai-session.sh`: script gửi request ngắn tới AI tool/API
-- `setup.sh`: installer và utility commands
-- `com.team.ai-quota-optimizer.plist`: template LaunchAgent, được render khi cài đặt
+- `trigger-ai-session.sh`: sends a short request to an AI tool or API
+- `setup.sh`: installer and utility commands
+- `com.team.ai-quota-optimizer.plist`: LaunchAgent template, rendered at install time
 
-## Cách project tránh hard-code máy cá nhân
+## No hard-coded paths
 
-File `com.team.ai-quota-optimizer.plist` trong repo là template, không chứa trực tiếp đường dẫn cá nhân.
+`com.team.ai-quota-optimizer.plist` in the repo is a template with no personal paths embedded.
 
-Khi chạy `./setup.sh install`, script sẽ:
+When you run `./setup.sh install`, the script:
 
-- render `WorkingDirectory` theo thư mục thực tế của repo trên máy người dùng
-- render đường dẫn log theo `$HOME`
-- copy file hoàn chỉnh vào `~/Library/LaunchAgents/`
+- sets `WorkingDirectory` to the actual repo directory on your machine
+- sets the log path based on `$HOME`
+- copies the rendered file to `~/Library/LaunchAgents/`
 
-Nhờ đó mọi người có thể clone repo vào bất kỳ thư mục nào rồi cài đặt.
+This means anyone can clone the repo into any directory and install it without modification.
 
-## Lưu ý thực tế
+## Practical notes
 
-- `launchd` không thay thế việc wake máy. Nếu máy đang sleep và bạn muốn job chạy đúng 05:30, nên bật `setup-wake`.
-- `wake` chỉ áp dụng khi máy đang sleep. Nếu máy shutdown hoàn toàn, cần cơ chế khác như `poweron` và phần cứng phải hỗ trợ.
-- Với Codex CLI, project hiện dùng `codex exec` cho chế độ non-interactive thay vì các option cũ như `--quiet`.
-- Một số CLI có thể thay đổi cú pháp theo phiên bản. Nếu tool của bạn không phải `claude` hoặc `codex`, hãy sửa `trigger-ai-session.sh` cho phù hợp.
-- Project này không xử lý weekly usage limit. Nó chỉ tối ưu cửa sổ rolling 5 giờ theo ngày.
+- `launchd` does not wake the machine. If the machine is asleep and you want the job to run at 05:30, enable `setup-wake`.
+- `wake` only applies when the machine is sleeping. If it is fully shut down, a different mechanism (e.g. `poweron`) is needed, and hardware must support it.
+- For Codex CLI, the project uses `codex exec` for non-interactive mode instead of deprecated options like `--quiet`.
+- CLI syntax may change across versions. If your tool is not `claude` or `codex`, edit `trigger-ai-session.sh` accordingly.
+- This project does not handle weekly usage limits. It only optimizes the rolling 5-hour daily window.
 
-## Ví dụ workflow
+## Example workflow
 
-Buổi tối trước khi ngủ:
+The night before:
 
 ```bash
 ./setup.sh status
 ```
 
-Buổi sáng:
+In the morning:
 
-- 05:25 máy tự wake
-- 05:30 script tự trigger AI tool
-- 08:00-09:00 bắt đầu làm việc nhưng session 1 đã chạy được một phần
-- 10:30 reset sang session 2
-- 15:30 reset sang session 3
+- 05:25 machine wakes from sleep
+- 05:30 script triggers AI tool automatically
+- 08:00–09:00 you start work, session 1 is already partially through
+- 10:30 session 2 begins
+- 15:30 session 3 begins
 
-## Bảo mật
+## Security
 
-- Không commit API key vào repo.
-- Nếu dùng API trực tiếp, ưu tiên export biến môi trường trong shell profile hoặc cấu hình secret cục bộ.
-- Kiểm tra lại log trước khi chia sẻ nếu log có thể chứa output từ CLI.
+- Do not commit API keys to the repo.
+- If using APIs directly, export keys via your shell profile or a local secrets file.
+- Review logs before sharing them, as they may contain CLI output.
 
-## Giấy phép
+## License
 
-Phát hành theo giấy phép MIT. Xem file `LICENSE` để biết chi tiết.
+Released under the MIT License. See the `LICENSE` file for details.
