@@ -48,11 +48,17 @@ trigger_claude_code() {
 
     # Gửi message ngắn, không cần output dài → tiết kiệm token
     # --print: non-interactive mode (không mở editor)
-    if claude --print "$TRIGGER_MESSAGE. Respond with just 'ok'." >> "$LOG_FILE" 2>&1; then
+    # timeout 30s để tránh hang, dùng temp file để filter "Execution error" noise
+    local tmp_out
+    tmp_out=$(mktemp)
+    if timeout 30 claude --print "$TRIGGER_MESSAGE. Respond with just 'ok'." > "$tmp_out" 2>&1; then
+        grep -v '^Execution error' "$tmp_out" >> "$LOG_FILE" || true
         log "[Claude Code] SUCCESS - Session window started"
     else
+        cat "$tmp_out" >> "$LOG_FILE"
         log "[Claude Code] FAILED - exit code $?"
     fi
+    rm -f "$tmp_out"
 }
 
 # =============================================================================
