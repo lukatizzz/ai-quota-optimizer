@@ -5,7 +5,7 @@ AI Quota Optimizer là một utility nhỏ cho macOS để tự động "đốt"
 ## Quick Start
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/lukatizzz/ai-quota-optimizer
 cd ai-quota-optimizer
 ./setup.sh install
 ./setup.sh run-now
@@ -58,7 +58,7 @@ Ví dụ môi trường đã được kiểm chứng:
 Clone repo:
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/lukatizzz/ai-quota-optimizer
 cd ai-quota-optimizer
 ```
 
