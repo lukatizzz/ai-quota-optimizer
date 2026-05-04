@@ -25,18 +25,18 @@ usage() {
 Usage: $0 [command]
 
 Commands:
-  install      Render plist và cài LaunchAgent
-  uninstall    Gỡ LaunchAgent
-  status       Kiểm tra trạng thái
-  setup-wake   Bật wake-from-sleep lúc 05:25 T2-T6 (cần sudo)
-  remove-wake  Tắt wake schedule (cần sudo)
-  run-now      Chạy trigger ngay lập tức
-  logs         Xem log gần nhất
+  install      Render plist and install LaunchAgent
+  uninstall    Remove LaunchAgent
+  status       Show current status
+  setup-wake   Enable wake-from-sleep at 05:25 Mon-Fri (requires sudo)
+  remove-wake  Disable wake schedule (requires sudo)
+  run-now      Run the trigger immediately
+  logs         Show the most recent log
 EOF
 }
 
 render_plist() {
-	[[ -f "$PLIST_TEMPLATE" ]] || { error "Không tìm thấy template: $PLIST_TEMPLATE"; exit 1; }
+	[[ -f "$PLIST_TEMPLATE" ]] || { error "Template not found: $PLIST_TEMPLATE"; exit 1; }
 
 	mkdir -p "$(dirname "$PLIST_DEST")"
 	sed \
@@ -46,9 +46,9 @@ render_plist() {
 }
 
 do_install() {
-	info "=== Cài đặt AI Quota Optimizer ==="
+	info "=== Installing AI Quota Optimizer ==="
 
-	[[ -f "$TRIGGER_SCRIPT" ]] || { error "Không tìm thấy script: $TRIGGER_SCRIPT"; exit 1; }
+	[[ -f "$TRIGGER_SCRIPT" ]] || { error "Script not found: $TRIGGER_SCRIPT"; exit 1; }
 
 	chmod +x "$TRIGGER_SCRIPT" "$SCRIPT_DIR/setup.sh"
 	mkdir -p "$LOG_DIR"
@@ -56,62 +56,62 @@ do_install() {
 
 	launchctl unload "$PLIST_DEST" 2>/dev/null || true
 	if launchctl load "$PLIST_DEST"; then
-		success "Đã cài LaunchAgent: $PLIST_DEST"
+		success "LaunchAgent installed: $PLIST_DEST"
 	else
-		error "Không thể load LaunchAgent"
+		error "Failed to load LaunchAgent"
 		exit 1
 	fi
 
-	warn "Nếu muốn máy tự wake từ sleep lúc 05:25, chạy: sudo $0 setup-wake"
+	warn "To wake the machine from sleep at 05:25, run: sudo $0 setup-wake"
 }
 
 do_setup_wake() {
-	info "Cấu hình wake schedule: T2-T6 lúc 05:25..."
+	info "Configuring wake schedule: Mon-Fri at 05:25..."
 
 	if [[ "$EUID" -ne 0 ]]; then
-		error "Lệnh này cần sudo. Hãy chạy: sudo $0 setup-wake"
+		error "This command requires sudo. Run: sudo $0 setup-wake"
 		exit 1
 	fi
 
 	pmset repeat wake MTWRF 05:25:00
-	success "Đã đặt wake schedule: T2-T6 lúc 05:25"
+	success "Wake schedule set: Mon-Fri at 05:25"
 	pmset -g sched
 }
 
 do_remove_wake() {
-	info "Xóa wake schedule..."
+	info "Removing wake schedule..."
 
 	if [[ "$EUID" -ne 0 ]]; then
-		error "Lệnh này cần sudo. Hãy chạy: sudo $0 remove-wake"
+		error "This command requires sudo. Run: sudo $0 remove-wake"
 		exit 1
 	fi
 
 	pmset repeat cancel
-	success "Đã xóa wake schedule"
+	success "Wake schedule removed"
 }
 
 do_uninstall() {
-	info "Gỡ AI Quota Optimizer..."
+	info "Uninstalling AI Quota Optimizer..."
 
 	if [[ -f "$PLIST_DEST" ]]; then
 		launchctl unload "$PLIST_DEST" 2>/dev/null || true
 		rm -f "$PLIST_DEST"
-		success "Đã gỡ LaunchAgent"
+		success "LaunchAgent removed"
 	else
-		warn "LaunchAgent chưa được cài"
+		warn "LaunchAgent is not installed"
 	fi
 
-	warn "Nếu đã bật wake schedule, chạy thêm: sudo $0 remove-wake"
+	warn "If you enabled the wake schedule, also run: sudo $0 remove-wake"
 }
 
 do_status() {
-	info "=== Trạng thái AI Quota Optimizer ==="
+	info "=== AI Quota Optimizer Status ==="
 	echo
 
 	if [[ -f "$PLIST_DEST" ]]; then
-		success "LaunchAgent plist: CÓ ($PLIST_DEST)"
+		success "LaunchAgent plist: INSTALLED ($PLIST_DEST)"
 	else
-		warn "LaunchAgent plist: CHƯA CÀI ĐẶT"
+		warn "LaunchAgent plist: NOT INSTALLED"
 	fi
 
 	echo
@@ -119,29 +119,29 @@ do_status() {
 	local wake_sched
 	wake_sched="$(pmset -g sched 2>/dev/null || true)"
 	if echo "$wake_sched" | grep -qE "5:25AM|05:25"; then
-		success "  Wake 05:25 T2-T6: ĐÃ BẬT"
+		success "  Wake 05:25 Mon-Fri: ENABLED"
 	else
-		warn "  Wake schedule chưa cấu hình → chạy: sudo $0 setup-wake"
+		warn "  Wake schedule not configured → run: sudo $0 setup-wake"
 		[[ -n "$wake_sched" ]] && echo "$wake_sched"
 	fi
 
 	echo
 	info "LaunchAgent status:"
-	launchctl list | grep "com.team.ai-quota-optimizer" || warn "  Chưa được load vào launchctl"
+	launchctl list | grep "com.team.ai-quota-optimizer" || warn "  Not loaded in launchctl"
 
 	echo
 	local latest_log
 	latest_log="$(ls -t "$LOG_DIR"/session-*.log 2>/dev/null | head -1 || true)"
 	if [[ -n "$latest_log" ]]; then
-		info "Log gần nhất: $latest_log"
+		info "Most recent log: $latest_log"
 		tail -5 "$latest_log"
 	else
-		warn "Chưa có log nào"
+		warn "No logs found"
 	fi
 }
 
 do_run_now() {
-	info "Chạy trigger thủ công..."
+	info "Running trigger manually..."
 	bash "$TRIGGER_SCRIPT"
 }
 
@@ -151,7 +151,7 @@ do_logs() {
 	if [[ -n "$latest_log" ]]; then
 		cat "$latest_log"
 	else
-		warn "Chưa có log nào"
+		warn "No logs found"
 	fi
 }
 

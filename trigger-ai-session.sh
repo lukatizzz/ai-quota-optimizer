@@ -2,27 +2,27 @@
 # =============================================================================
 # AI Quota Optimizer - Session Trigger Script
 # =============================================================================
-# Mục đích: Tự động gửi message "hello" tới AI tools lúc 5h-6h sáng
-#           để khởi động 5h usage window sớm hơn giờ làm việc.
+# Purpose: Automatically send a short message to AI tools at 05:30
+#          to start the 5-hour usage window before working hours begin.
 #
-# Chiến lược quota:
-#   Session 1 (auto): 05:30 → 10:30  (window kết thúc trước peak hours)
+# Quota strategy:
+#   Session 1 (auto): 05:30 → 10:30  (window ends before peak hours)
 #   Session 2 (work): 10:30 → 15:30  (morning + afternoon peak)
-#   Session 3 (work): 15:30 → 20:30  (cuối giờ làm + buffer)
-#   ⇒ 3 sessions thay vì 2 sessions nếu bắt đầu lúc 8h-9h
+#   Session 3 (work): 15:30 → 20:30  (late work hours + buffer)
+#   ⇒ 3 sessions instead of 2 if starting at 08:00–09:00
 # =============================================================================
 
 set -euo pipefail
 
-# Bổ sung các thư mục binary user-level phổ biến mà launchd thường không có sẵn.
+# Prepend common user-level binary directories that launchd typically omits.
 export PATH="$HOME/.local/bin:$HOME/bin:$PATH"
 
-# --- Cấu hình ---
+# --- Configuration ---
 LOG_DIR="$HOME/.ai-quota-optimizer/logs"
 LOG_FILE="$LOG_DIR/session-$(date +%Y-%m-%d).log"
 TRIGGER_MESSAGE="hello"
 
-# Tạo log directory nếu chưa có
+# Create log directory if it does not exist
 mkdir -p "$LOG_DIR"
 
 log() {
@@ -46,9 +46,9 @@ trigger_claude_code() {
 
     log "[Claude Code] Triggering session..."
 
-    # Gửi message ngắn, không cần output dài → tiết kiệm token
-    # --print: non-interactive mode (không mở editor)
-    # timeout 30s để tránh hang, dùng temp file để filter "Execution error" noise
+    # Send a short message, no lengthy output needed → saves tokens
+    # --print: non-interactive mode (no editor opened)
+    # timeout 30s to prevent hanging; use temp file to filter "Execution error" noise
     local tmp_out
     tmp_out=$(mktemp)
     if timeout 30 claude --print "$TRIGGER_MESSAGE. Respond with just 'ok'." > "$tmp_out" 2>&1; then
@@ -82,7 +82,7 @@ trigger_codex() {
 }
 
 # =============================================================================
-# OPENAI API trực tiếp (nếu dùng API key)
+# OPENAI API (direct, using API key)
 # =============================================================================
 trigger_openai_api() {
     log "[OpenAI API] Checking availability..."
@@ -117,7 +117,7 @@ trigger_openai_api() {
 }
 
 # =============================================================================
-# ANTHROPIC API trực tiếp (nếu dùng API key)
+# ANTHROPIC API (direct, using API key)
 # =============================================================================
 trigger_anthropic_api() {
     log "[Anthropic API] Checking availability..."
@@ -148,7 +148,7 @@ trigger_anthropic_api() {
 }
 
 # =============================================================================
-# Chạy tất cả triggers
+# Run all triggers
 # =============================================================================
 main() {
     log "Starting session triggers..."
