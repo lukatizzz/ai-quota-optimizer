@@ -10,6 +10,7 @@ cd ai-quota-optimizer
 ./setup.sh install
 ./setup.sh run-now
 ./setup.sh status
+./setup.sh logs
 ```
 
 Nếu muốn máy tự wake khỏi sleep lúc 05:25 sáng các ngày làm việc:
@@ -52,45 +53,6 @@ Ví dụ môi trường đã được kiểm chứng:
 
 - Claude Code CLI tại `$HOME/.local/bin/claude`
 - Codex CLI với chế độ non-interactive qua `codex exec`
-
-## Cài đặt nhanh
-
-Clone repo:
-
-```bash
-git clone https://github.com/lukatizzz/ai-quota-optimizer
-cd ai-quota-optimizer
-```
-
-Cài LaunchAgent:
-
-```bash
-./setup.sh install
-```
-
-Nếu muốn máy tự wake khỏi sleep lúc 05:25 sáng các ngày làm việc:
-
-```bash
-sudo ./setup.sh setup-wake
-```
-
-Kiểm tra trạng thái:
-
-```bash
-./setup.sh status
-```
-
-Chạy thử ngay lập tức:
-
-```bash
-./setup.sh run-now
-```
-
-Xem log gần nhất:
-
-```bash
-./setup.sh logs
-```
 
 ## Gỡ cài đặt
 
